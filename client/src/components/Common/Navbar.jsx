@@ -11,25 +11,6 @@ import { categories } from "../../services/apis"
 import { ACCOUNT_TYPE } from "../../utils/constants"
 import ProfileDropdown from "../core/Auth/ProfileDropdown"
 
-// const subLinks = [
-//   {
-//     title: "Python",
-//     link: "/catalog/python",
-//   },
-//   {
-//     title: "javascript",
-//     link: "/catalog/javascript",
-//   },
-//   {
-//     title: "web-development",
-//     link: "/catalog/web-development",
-//   },
-//   {
-//     title: "Android Development",
-//     link: "/catalog/Android Development",
-//   },
-// ];
-
 function Navbar() {
   const { token } = useSelector((state) => state.auth)
   const { user } = useSelector((state) => state.profile)
@@ -39,20 +20,27 @@ function Navbar() {
   const [subLinks, setSubLinks] = useState([])
   const [loading, setLoading] = useState(false)
 
+  // Fetching categories
   useEffect(() => {
-    ;(async () => {
+    const fetchCategories = async () => {
       setLoading(true)
       try {
         const res = await apiConnector("GET", categories.CATEGORIES_API)
-        setSubLinks(res.data.data)
+        // Safely check if res.data.data is an array before setting subLinks
+        if (Array.isArray(res?.data?.data)) {
+          setSubLinks(res.data.data)
+        } else {
+          setSubLinks([])
+        }
       } catch (error) {
-        console.log("Could not fetch Categories.", error)
+        console.error("Could not fetch Categories.", error)
+        setSubLinks([]) // Handle error by setting an empty array
       }
       setLoading(false)
-    })()
-  }, [])
+    }
 
-  // console.log("sub links", subLinks)
+    fetchCategories()
+  }, [])
 
   const matchRoute = (route) => {
     return matchPath({ path: route }, location.pathname)
@@ -89,13 +77,13 @@ function Navbar() {
                         <div className="absolute left-[50%] top-0 -z-10 h-6 w-6 translate-x-[80%] translate-y-[-40%] rotate-45 select-none rounded bg-richblack-5"></div>
                         {loading ? (
                           <p className="text-center">Loading...</p>
-                        ) : subLinks.length ? (
+                        ) : subLinks.length > 0 ? (
                           <>
                             {subLinks
                               ?.filter(
                                 (subLink) => subLink?.courses?.length > 0
                               )
-                              ?.map((subLink, i) => (
+                              .map((subLink, i) => (
                                 <Link
                                   to={`/catalog/${subLink.name
                                     .split(" ")
@@ -144,18 +132,18 @@ function Navbar() {
             </Link>
           )}
           {token === null && (
-            <Link to="/login">
-              <button className="rounded-[8px] border border-richblack-700 bg-richblack-800 px-[12px] py-[8px] text-richblack-100">
-                Log in
-              </button>
-            </Link>
-          )}
-          {token === null && (
-            <Link to="/signup">
-              <button className="rounded-[8px] border border-richblack-700 bg-richblack-800 px-[12px] py-[8px] text-richblack-100">
-                Sign up
-              </button>
-            </Link>
+            <>
+              <Link to="/login">
+                <button className="rounded-[8px] border border-richblack-700 bg-richblack-800 px-[12px] py-[8px] text-richblack-100">
+                  Log in
+                </button>
+              </Link>
+              <Link to="/signup">
+                <button className="rounded-[8px] border border-richblack-700 bg-richblack-800 px-[12px] py-[8px] text-richblack-100">
+                  Sign up
+                </button>
+              </Link>
+            </>
           )}
           {token !== null && <ProfileDropdown />}
         </div>
